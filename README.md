@@ -1,3 +1,6 @@
+# Note - 05022025
+ I fixed a lot of this code from the original repo through ChatGPT Vibe coding. If anything doesnt work, sorry. I just fixed it for the data I needed to extract.
+ 
 # TeamViewer_Forensics
 A series of functions to parse Teamviewer logs to answer specific questions
 
