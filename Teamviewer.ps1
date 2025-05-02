@@ -206,17 +206,17 @@ function Get-TVIncomingLog_Unique {
         Used to select the returning of unique logged on users
 
     .EXAMPLE
-        Get-TVIncomigLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -incomingid
+        Get-TVIncomingLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -incomingid
 
         Returns the entries containing unique incoming IDs
 
     .EXAMPLE
-        Get-TVIncomigLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -displayname
+        Get-TVIncomingLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -displayname
 
         Returns the entries containing unique display names
 
     .EXAMPLE
-        Get-TVIncomigLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -loggedonuser
+        Get-TVIncomingLog_Unique -file "C:\Program Files (x86)\TeamViewer\connections_incoming.txt" -loggedonuser
 
         Returns the entries containing unique logged on user
     #>
