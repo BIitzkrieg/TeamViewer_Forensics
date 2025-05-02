@@ -389,7 +389,7 @@ function Get-TVLogFile_AccountLogons {
     # Iterate through each log file
     foreach ($line in $logs.FullName) {
         # Read and search for relevant patterns in the log file
-        $logfile = Get-Content $line | Select-String -Pattern "HandleLoginFinished: Authentication successful", "Account::Logout: Account session terminated successfully"
+        $logfile = Get-Content $line | Select-String -Pattern "(HandleLoginFinished|HandleLoginFinishedWithOld): Authentication successful", "Account::Logout: Account session terminated successfully"
 
         # Process each matched item
         foreach ($item in $logfile) {
