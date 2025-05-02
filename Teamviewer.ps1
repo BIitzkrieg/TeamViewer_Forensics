@@ -598,12 +598,12 @@ Function Get-TVLogFile_Outgoing {
             # Ensure the line contains sufficient parts
             if ($split.Length -ge 5) {
                 # If the line matches the expected pattern for "mode = 1"
-                if ($line -like "*mode = 1") {
+                if ($line.Line -like "*mode = 1*") {
                     $tvID = $split[-4].Trim(',')  # Extract TV ID
-                    $index = $logContent.IndexOf($line) + 1
+                    $index = $logContent.IndexOf($line.Line) + 1
 
-                    # Check for "KeepAliveLost" in the next line
-                    if ($logContent[$index] -match "KeepAliveLost") {
+                    # Check for "KeepAliveLost" in the next line, if available
+                    if ($index -lt $logContent.Count -and $logContent[$index] -match "KeepAliveLost") {
                         $success = "No"
                     } else {
                         $success = "Yes"
@@ -615,26 +615,31 @@ Function Get-TVLogFile_Outgoing {
                         $data = [datetime]$data
                         $data = $data.ToString("MM/dd/yyyy HH:mm:ss")
                     } catch {
-                        Write-Warning "Failed to parse date for line: $line"
+                        Write-Warning "Failed to parse date for line: $($line.Line)"
                         continue
                     }
 
                     # Add the result as a custom object
                     $obj += [pscustomobject]@{
-                        Date      = $data
-                        ID        = $tvID
+                        Date       = $data
+                        ID         = $tvID
                         Successful = $success
                     }
                 }
             } else {
-                Write-Warning "Line does not contain expected number of parts: $line"
+                Write-Warning "Line does not contain expected number of parts: $($line.Line)"
             }
         }
     }
 
-    # Return the results
-    return $obj
+    # Output results or message
+    if ($obj.Count -eq 0) {
+        Write-Output "No outgoing connections found."
+    } else {
+        return $obj
+    }
 }
+
 
 
 Function Get-TVLogFile_KeyboardLayout {
