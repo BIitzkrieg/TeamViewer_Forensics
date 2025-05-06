@@ -290,76 +290,64 @@ function Get-TVIncomingLog_Unique {
 function Get-TVLogFile_RunTimes {
     <#
     .SYNOPSIS
-        Parses the Teamviewer15_logfile.log and Teamviewer15_logfile_OLD.log for the run time of the Teamviewer program
+        Parses the TeamViewer15_logfile.log and TeamViewer15_logfile_OLD.log for the run time of the TeamViewer program
 
     .PARAMETER directory
-        Used to specify the directory containing the log files
+        Directory containing the log files
 
     .EXAMPLE
         Get-TVLogFile_RunTimes -directory "C:\Program Files (x86)\TeamViewer"
-
-        Will search the specified directory and parse the log files, returning the run time of the Teamviewer program
     #>
     [CmdletBinding()]
     param(
         [string]$directory
     )
 
-    # Get all relevant log files in the directory
-    $logs = Get-ChildItem -Path ($directory + "\TeamViewer15_Logfile*.log")
-    Write-Host "Logs found: $($logs.Count)"
+    # Get all relevant log files
+    $logs = Get-ChildItem -Path (Join-Path $directory "TeamViewer15_Logfile*.log") -ErrorAction SilentlyContinue
+    Write-Verbose "Logs found: $($logs.Count)"
 
-    # Initialize an empty array for storing the results
     $obj = @()
 
-    # Iterate through each log file
-    foreach ($line in $logs.FullName) {
-        # Read and search for relevant patterns in the log file
-        $logfile = Get-Content $line | Select-String -Pattern '(2]::processconnected:) | (Closing TeamViewer)'
+    foreach ($logPath in $logs.FullName) {
+        # Find matching lines in each log
+        $logfile = Get-Content $logPath | Select-String -Pattern '(2\]::processconnected:)|(Closing TeamViewer)'
 
-        # Process each matched item
-        foreach ($item in $logfile) {
-            $data = $shutdownData = ''
+        for ($i = 0; $i -lt $logfile.Count; $i++) {
+            $line = $logfile[$i]
 
-            # Check if the line indicates program start (process connected)
-            if ($item -like "*2]::processconnected: *") {
-                $data = $item.Line -split ' '
-                $data = $data[0] + ' ' + $data[1]
+            if ($line.Line -like "*2]::processconnected:*") {
+                # Parse Program Start
+                $startParts = $line.Line -split ' '
+                $startTime = $null
+                try {
+                    $startTime = [datetime]::ParseExact("$($startParts[0]) $($startParts[1])", "yyyy/MM/dd HH:mm:ss.fff", $null)
+                } catch {}
 
-                # Safely convert to DateTime
-                try { 
-                    $data = [datetime]$data
-                } catch {
-                    $data = $null
-                }
-
-                # Check for the shutdown event after the process start
-                $index = ($logfile.IndexOf($item) + 1)
-                if ($logfile[$index] -match "Closing TeamViewer") {
-                    $shutdownData = $logfile[$index].Line -split ' '
-                    $shutdownData = $shutdownData[0] + ' ' + $shutdownData[1]
-
-                    # Safely convert to DateTime
+                # Parse Program End (if next line exists and is a shutdown line)
+                $endTime = $null
+                if ($i + 1 -lt $logfile.Count -and $logfile[$i + 1].Line -match "Closing TeamViewer") {
+                    $endParts = $logfile[$i + 1].Line -split ' '
                     try {
-                        $shutdownData = [datetime]$shutdownData
-                    } catch {
-                        $shutdownData = $null
-                    }
+                        $endTime = [datetime]::ParseExact("$($endParts[0]) $($endParts[1])", "yyyy/MM/dd HH:mm:ss.fff", $null)
+                    } catch {}
                 }
 
-                # Create and add the custom object to the result array
-                if ($data -and $shutdownData) {
+                if ($startTime -and $endTime) {
                     $obj += [pscustomobject]@{
-                        ProgramStart = $data.ToString("MM/dd/yyyy HH:mm:ss")
-                        ProgramEnd   = $shutdownData.ToString("MM/dd/yyyy HH:mm:ss")
+                        ProgramStart = $startTime.ToString("MM/dd/yyyy HH:mm:ss")
+                        ProgramEnd   = $endTime.ToString("MM/dd/yyyy HH:mm:ss")
                     }
                 }
             }
         }
     }
 
-    # Return the results
-    return $obj
+    if ($obj.Count -eq 0) {
+        Write-Output "No runtimes found."
+    } else {
+        return $obj
+    }
 }
 
 function Get-TVLogFile_AccountLogons {
